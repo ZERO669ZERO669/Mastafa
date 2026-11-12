@@ -68,7 +68,7 @@ export const StatusModal: React.FC<StatusModalProps> = ({
           {savedCheckpoint && (
             <div className="rounded-lg border border-emerald-700/50 bg-emerald-950/60 px-3 py-1 text-[11px] font-bold text-emerald-200 tabular-nums">
               آخر حفظ نشط: الفصل {savedCheckpoint.chapterNum} ({savedCheckpoint.roomNameAr}) · الألغاز{' '}
-              {savedCheckpoint.sigilsSolved}/6
+              {savedCheckpoint.sigilsSolved}/8
             </div>
           )}
           <div className="space-y-2 [@media(max-height:500px)]:space-y-1.5 pt-0.5">

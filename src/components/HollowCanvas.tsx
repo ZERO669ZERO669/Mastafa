@@ -4,7 +4,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { VignetteShader } from 'three/addons/shaders/VignetteShader.js';
 import {
   AchievementId,
   CastleDoor,
@@ -524,6 +526,10 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
       }
 
       if (target.type === 'deed') {
+        if (!s.puzzles.some((pz) => pz.id === 'tomb_seal' && pz.solved)) {
+          p.onShowToast('ختم الضريح ما زال يحمي الوثيقة. اضبط أقراص الرموز الثلاثة أولاً.');
+          return;
+        }
         s.inventory.add('inheritance_deed');
         s.inventory.add('master_exit_key');
         awakenGrandfatherFromTomb(s.player, s.enemies, s.doors, s.safeZones, s.walls);
@@ -727,10 +733,10 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
       scene.add(camera);
 
       // Pitch-dark Gothic shadow fill so Mark's handheld flashlight is genuinely essential
-      const hemiLight = new THREE.HemisphereLight(0x1e1b2e, 0x050308, 0.032);
+      const hemiLight = new THREE.HemisphereLight(0x1e1b2e, 0x050308, 0.046);
       scene.add(hemiLight);
 
-      const moonRimLight = new THREE.DirectionalLight(0x93c5fd, 0.018);
+      const moonRimLight = new THREE.DirectionalLight(0x93c5fd, 0.026);
       moonRimLight.position.set(12, 24, -18);
       scene.add(moonRimLight);
 
@@ -792,6 +798,7 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
       // Next-Gen Post-Processing Pipeline (Cinematic Bloom + ACES Output) on Hardware GPUs
       let composer: EffectComposer | null = null;
       let bloomPass: UnrealBloomPass | null = null;
+      let vignettePass: ShaderPass | null = null;
       if (!isSoftwareGl) {
         composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
@@ -802,6 +809,10 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
           0.84
         );
         composer.addPass(bloomPass);
+        vignettePass = new ShaderPass(VignetteShader);
+        vignettePass.uniforms.offset.value = 1.12;
+        vignettePass.uniforms.darkness.value = 1.22;
+        composer.addPass(vignettePass);
         composer.addPass(new OutputPass());
         renderer.compile(scene, camera);
       }
@@ -828,7 +839,7 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
         for (const flame of worldHandles.statueBowlFlames) {
           flame.visible = false;
         }
-        worldHandles.deedVisual.visible = true;
+        worldHandles.deedVisual.visible = false;
         worldHandles.sarcophagusLid.position.set(SARCOPHAGUS_POS.x, 1.27, SARCOPHAGUS_POS.z);
         worldHandles.sarcophagusLid.rotation.z = 0;
         worldHandles.sarcophagusMistMat.opacity = 0;
@@ -866,7 +877,8 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
           const rl = s.relics.find((item) => item.id === rlId);
           rlMesh.visible = !rl?.collected;
         }
-        worldHandles.deedVisual.visible = !s.player.hasDeed;
+        const tombSealSolved = s.puzzles.some((item) => item.id === 'tomb_seal' && item.solved);
+        worldHandles.deedVisual.visible = tombSealSolved && !s.player.hasDeed;
         if (s.player.tombAwakened) {
           worldHandles.sarcophagusLid.position.set(SARCOPHAGUS_POS.x + 1.32, 1.27, SARCOPHAGUS_POS.z);
           worldHandles.sarcophagusLid.rotation.z = -0.24;
@@ -904,6 +916,9 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
           for (const flame of worldHandles.statueBowlFlames) {
             flame.visible = true;
           }
+        }
+        if (puzzleId === 'tomb_seal' && !simRef.current.player.hasDeed) {
+          worldHandles.deedVisual.visible = true;
         }
       };
 
@@ -1281,6 +1296,8 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
 
         const s = simRef.current;
         const p = propsRef.current;
+        const tombSealComplete = s.puzzles.some((pz) => pz.id === 'tomb_seal' && pz.solved);
+        worldHandles.deedVisual.visible = tombSealComplete && !s.player.hasDeed;
 
         // Live sync FOV & Graphics Quality from Steam Settings
         if (s.appliedFov !== p.settings.fov) {
@@ -1643,7 +1660,7 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
                   'rounded px-2 py-0.5 text-[11px] font-extrabold bg-rose-900 text-rose-100';
               } else if (enemyRes.chasingEnemyKind === 'grandfather') {
                 refs.threatBadge.textContent =
-                  'روح الجد الشرير تطاردك — أنت أسرع منه، اركض أو اختبئ!';
+                  'روح الجد تلاحقك وهي أسرع منك — اختبئ، اكسر خط الرؤية أو اندفع!';
                 refs.threatBadge.className =
                   'rounded px-2 py-0.5 text-[11px] font-extrabold bg-red-900 text-amber-100';
               } else if (enemyRes.chasingEnemyKind === 'apparition') {
@@ -1705,14 +1722,14 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
               grandfatherRig.root.position.set(e.x, 0, e.z);
               grandfatherRig.root.rotation.y = e.rotY;
               grandfatherRig.setFlash(
-                e.hitFlashTimer > 0 ? 1 : e.alertState === 'chase' ? 0.45 : 0
+                e.hitFlashTimer > 0 ? 1 : e.alertState === 'chase' ? 0.62 : 0
               );
 
               if (!s.deathSeq.active) {
                 if (e.stunTimer > 0) {
                   grandfatherRig.setClip('idle', 0.35);
                 } else if (e.alertState === 'chase') {
-                  grandfatherRig.setClip('chase', s.player.tombAwakened ? 1.05 : 0.92);
+                  grandfatherRig.setClip('chase', s.player.tombAwakened ? 1.24 : 1.14);
                 } else {
                   grandfatherRig.setClip('walk', 0.85);
                 }
@@ -1741,7 +1758,7 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
           s.lightningFlash = Math.max(0, s.lightningFlash - dt * 3.4);
         }
         moonRimLight.intensity = 0.018 + s.lightningFlash * 1.65;
-        hemiLight.intensity = 0.032 + s.lightningFlash * 0.26;
+        hemiLight.intensity = 0.046 + s.lightningFlash * 0.26;
 
         // Attach up to 4 localized dim candle/lamp halos nearest the camera so rooms stay ominously dark without Mark's flashlight
         const camX = camera.position.x;
@@ -1802,6 +1819,7 @@ export const HollowCanvas = React.forwardRef<HollowCanvasHandle, HollowCanvasPro
         }
         if (composer && bloomPass) {
           bloomPass.enabled = ultraActive;
+          if (vignettePass) vignettePass.enabled = ultraActive;
           composer.render();
         } else {
           renderer.render(scene, camera);

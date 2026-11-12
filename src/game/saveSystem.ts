@@ -45,7 +45,7 @@ export interface StorageLike {
 }
 
 export interface SavedCheckpointData {
-  version: 1;
+  version: 1 | 2;
   savedAtMs: number;
   chapterNum: number;
   roomNameAr: string;
@@ -121,7 +121,7 @@ export function createCheckpointSnapshot(sim: {
   const safeZ = sim.player.isHidden ? sim.player.hideExitZ : sim.player.z;
 
   return {
-    version: 1,
+    version: 2,
     savedAtMs: Date.now(),
     chapterNum: obj.chapterNum,
     roomNameAr: obj.roomNameAr,
@@ -175,7 +175,7 @@ export function loadCheckpointFromStorage(
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SavedCheckpointData>;
     if (
-      parsed.version !== 1 ||
+      (parsed.version !== 1 && parsed.version !== 2) ||
       !parsed.player ||
       typeof parsed.player.x !== 'number' ||
       typeof parsed.player.z !== 'number' ||
@@ -186,9 +186,9 @@ export function loadCheckpointFromStorage(
       return null;
     }
     return {
-      version: 1,
+      version: parsed.version,
       savedAtMs: typeof parsed.savedAtMs === 'number' ? parsed.savedAtMs : Date.now(),
-      chapterNum: typeof parsed.chapterNum === 'number' ? clamp(parsed.chapterNum, 1, 7) : 1,
+      chapterNum: typeof parsed.chapterNum === 'number' ? clamp(parsed.chapterNum, 1, 9) : 1,
       roomNameAr:
         typeof parsed.roomNameAr === 'string' && parsed.roomNameAr.length > 0
           ? parsed.roomNameAr
@@ -253,10 +253,26 @@ export function applyCheckpointToSim(
   const plaqueSet = new Set<string>(data.discoveredPlaqueIds);
   const relicSet = new Set<string>(data.collectedRelicIds);
   const pickupSet = new Set<string>(data.collectedPickupIds);
+  const inventory = new Set<InventoryItemId>(data.inventory);
+
+  // Version 1 used the safe reward as the Crypt Key. Re-route that old checkpoint
+  // through the two new mandatory puzzles without losing the player's solved six.
+  if (data.version === 1 && solvedSet.has('safe') && !data.player.hasDeed) {
+    inventory.add('bedroom_key');
+    inventory.delete('crypt_key');
+  }
+  if (data.player.hasDeed) {
+    inventory.add('inheritance_deed');
+    inventory.add('master_exit_key');
+  }
 
   sim.doors = createInitialDoors().map((d) => {
-    const isOpen = openSet.has(d.id) || (data.player.tombAwakened && d.id === 'door-crypt-escape');
-    const unlocked = d.unlocked || unlockedSet.has(d.id) || isOpen;
+    const hasRequiredItem = !d.requiredItem || inventory.has(d.requiredItem);
+    const isOpen =
+      (openSet.has(d.id) || (data.player.tombAwakened && d.id === 'door-crypt-escape')) &&
+      hasRequiredItem;
+    const unlocked =
+      (d.unlocked || (unlockedSet.has(d.id) && hasRequiredItem) || isOpen) && hasRequiredItem;
     return {
       ...d,
       unlocked,
@@ -295,11 +311,7 @@ export function applyCheckpointToSim(
     collected: pickupSet.has(pk.id),
   }));
 
-  sim.inventory = new Set<InventoryItemId>(data.inventory);
-  if (data.player.hasDeed) {
-    sim.inventory.add('inheritance_deed');
-    sim.inventory.add('master_exit_key');
-  }
+  sim.inventory = inventory;
 
   sim.playedDialogues = new Set<string>(data.playedDialogues);
   sim.survivalSeconds = data.survivalSeconds;

@@ -2,17 +2,21 @@ import React, { useState } from 'react';
 import { BookOpen, Eye, RotateCcw, X } from 'lucide-react';
 import { CluePlaque, LoreNote, PuzzleStation } from '../game/types';
 import {
+  BEDROOM_CHIMES,
   ELIXIR_VIALS,
   INITIAL_SAFE_GRID,
   MONITOR_CHANNEL_LABELS,
   STEAM_VALVES,
+  TOMB_SEAL_SYMBOLS,
   VEILED_STATUES,
   computeSteamPressure,
   evaluateElixirMix,
   traceSafeLaserBeam,
+  validateBedroomChime,
   validateGrandfatherClock,
   validateSecurityMonitors,
   validateStatueOffering,
+  validateTombSeal,
 } from '../game/puzzles';
 
 interface PuzzleModalProps {
@@ -56,6 +60,12 @@ export const PuzzleModal: React.FC<PuzzleModalProps> = ({
 
   // 6. Royal Safe Mirror Grid (3x3)
   const [safeGrid, setSafeGrid] = useState<number[]>([...INITIAL_SAFE_GRID]);
+
+  // 7. Victor's four haunted bedchamber chimes
+  const [bedroomChimeSequence, setBedroomChimeSequence] = useState<number[]>([]);
+
+  // 8. Three rotating marble seal dials in the crypt
+  const [tombSealDials, setTombSealDials] = useState<[number, number, number]>([0, 0, 0]);
 
   if (!puzzle) return null;
 
@@ -159,6 +169,41 @@ export const PuzzleModal: React.FC<PuzzleModalProps> = ({
     const trace = traceSafeLaserBeam(next);
     if (trace.solved) {
       onSolved(puzzle);
+    }
+  };
+
+  const tapBedroomChime = (num: number, freq: number) => {
+    onPlayBellTone(freq);
+    setFeedback(null);
+    const next = [...bedroomChimeSequence, num];
+    if (next.length === 4) {
+      if (validateBedroomChime(next)) {
+        onSolved(puzzle);
+      } else {
+        setBedroomChimeSequence([]);
+        setFeedback('اختلّ اللحن وانطفأت الأجراس. اقرأ النوتة التي خلف المرآة ثم أعد المحاولة.');
+      }
+    } else {
+      setBedroomChimeSequence(next);
+    }
+  };
+
+  const cycleTombSealDial = (idx: number) => {
+    onPlayClick?.(0.8 + idx * 0.1);
+    setFeedback(null);
+    setTombSealDials((prev) => {
+      const next = [...prev] as [number, number, number];
+      next[idx] = (next[idx] + 1) % TOMB_SEAL_SYMBOLS.length;
+      return next;
+    });
+  };
+
+  const submitTombSeal = () => {
+    if (validateTombSeal(tombSealDials)) {
+      onSolved(puzzle);
+    } else {
+      onPlayClick?.(0.55);
+      setFeedback('أصدر الختم صريراً ولم ينفتح. افحص نقش الأقراص قرب التابوت؛ رمز الهلال مضلل.');
     }
   };
 
@@ -499,6 +544,66 @@ export const PuzzleModal: React.FC<PuzzleModalProps> = ({
                   <span>▶🔓</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 7. BEDCHAMBER CHIME SEQUENCE */}
+          {puzzle.id === 'bedroom_chime' && (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-amber-700/50 bg-[#17110a] p-3 text-center">
+                <div className="text-xs font-bold text-amber-300">تسلسل النغمات التي عزفتها</div>
+                <div dir="ltr" className="mt-1 font-mono text-xl font-extrabold tracking-[0.35em] text-amber-100">
+                  {bedroomChimeSequence.length ? bedroomChimeSequence.join(' · ') : '— · — · — · —'}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {BEDROOM_CHIMES.map((chime) => (
+                  <button
+                    key={chime.num}
+                    type="button"
+                    onClick={() => tapBedroomChime(chime.num, chime.freq)}
+                    className="rounded-xl border border-amber-600/55 bg-stone-900 px-3 py-4 text-center text-sm font-bold text-amber-100 hover:border-amber-300 hover:bg-amber-950/60 cursor-pointer"
+                  >
+                    <span className="mb-1 block text-2xl text-amber-400">♬</span>
+                    {chime.nameAr}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setBedroomChimeSequence([])}
+                className="w-full rounded-xl border border-stone-700 bg-stone-900 py-2.5 text-xs font-bold text-stone-300 hover:bg-stone-800 cursor-pointer"
+              >
+                <span className="inline-flex items-center gap-1.5"><RotateCcw className="h-3.5 w-3.5" /> إعادة النوتة من البداية</span>
+              </button>
+            </div>
+          )}
+
+          {/* 8. THREE-DIAL MARBLE TOMB SEAL */}
+          {puzzle.id === 'tomb_seal' && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2.5">
+                {tombSealDials.map((symbol, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => cycleTombSealDial(idx)}
+                    aria-label={`تدوير قرص الختم ${idx + 1}`}
+                    className="rounded-xl border border-stone-600 bg-gradient-to-b from-stone-800 to-stone-950 px-2 py-5 text-center shadow-inner hover:border-amber-400 cursor-pointer"
+                  >
+                    <span className="block text-[10px] font-bold text-stone-400">القرص {idx + 1}</span>
+                    <span className="mt-1 block text-base sm:text-lg font-extrabold text-amber-200">{TOMB_SEAL_SYMBOLS[symbol]}</span>
+                    <span className="mt-2 block text-[10px] text-amber-500">اضغط للتدوير</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={submitTombSeal}
+                className="w-full rounded-xl bg-amber-800 py-3 text-sm font-extrabold text-amber-50 hover:bg-amber-700 cursor-pointer"
+              >
+                كسر ختم الضريح
+              </button>
             </div>
           )}
 

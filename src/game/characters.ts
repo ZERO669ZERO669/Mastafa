@@ -797,6 +797,9 @@ export function buildGrandfatherHorrorRig(): GrandfatherHorrorRig {
     },
     setFlash(flashIntensity) {
       const eInt = 2.2 + flashIntensity * 3.8;
+      const eyeGlow = flashIntensity > 0.25 ? 0xef4444 : 0xf59e0b;
+      eyeMatL.emissive.setHex(eyeGlow);
+      eyeMatR.emissive.setHex(eyeGlow);
       eyeMatL.emissiveIntensity = eInt;
       eyeMatR.emissiveIntensity = eInt;
       auraLightMat.opacity = 0.78 + flashIntensity * 0.2;
@@ -885,13 +888,16 @@ export function buildMarkFirstPersonRig(): MarkFirstPersonRig {
   rCuff.rotation.x = Math.PI / 2 - 0.18;
   rCuff.position.set(0.02, -0.02, 0.04);
   rightArmPivot.add(rCuff);
+  const rCuffSeam = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.003, 6, 16), brassMat);
+  rCuffSeam.position.set(0.02, -0.02, 0.064);
+  rightArmPivot.add(rCuffSeam);
 
   const rPalm = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.065, 0.095), skinMat);
   rPalm.position.set(0, -0.01, -0.02);
   rightArmPivot.add(rPalm);
 
   for (let f = 0; f < 4; f++) {
-    const finger = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.052, 0.022), skinMat);
+    const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.009, 0.035, 4, 8), skinMat);
     finger.position.set(-0.036, 0.005, -0.05 + f * 0.022);
     finger.rotation.z = 0.35;
     rightArmPivot.add(finger);
@@ -980,6 +986,15 @@ export function buildMarkFirstPersonRig(): MarkFirstPersonRig {
   lSleeve.position.set(-0.05, -0.09, 0.17);
   leftArmPivot.add(lSleeve);
 
+  const lCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.039, 0.043, 0.045, 12), cuffMat);
+  lCuff.rotation.x = Math.PI / 2 - 0.25;
+  lCuff.rotation.z = 0.16;
+  lCuff.position.set(-0.045, -0.078, 0.025);
+  leftArmPivot.add(lCuff);
+  const lCuffSeam = new THREE.Mesh(new THREE.TorusGeometry(0.041, 0.003, 6, 16), brassMat);
+  lCuffSeam.position.set(-0.045, -0.078, 0.052);
+  leftArmPivot.add(lCuffSeam);
+
   const lForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.044, 0.14, 10), skinMat);
   lForearm.rotation.x = Math.PI / 2 - 0.35;
   lForearm.position.set(-0.015, -0.03, 0.04);
@@ -998,7 +1013,7 @@ export function buildMarkFirstPersonRig(): MarkFirstPersonRig {
   lPalm.add(palmScar);
 
   for (let f = 0; f < 4; f++) {
-    const lf = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.068, 0.016), skinMat);
+    const lf = new THREE.Mesh(new THREE.CapsuleGeometry(0.008, 0.048, 4, 8), skinMat);
     lf.position.set(-0.026 + f * 0.018, 0.072 + (f === 1 || f === 2 ? 0.008 : 0), 0);
     lf.rotation.z = (1.5 - f) * 0.06;
     lf.rotation.x = 0.12;
@@ -1120,17 +1135,19 @@ export function buildMarkFirstPersonRig(): MarkFirstPersonRig {
       const bobY = Math.abs(Math.sin(time * bobFreq)) * 0.018 * speedRatio;
       const swayX = THREE.MathUtils.clamp(-yawVel * 0.04, -0.045, 0.045);
       const swayY = THREE.MathUtils.clamp(pitchVel * 0.04, -0.04, 0.04);
+      const breath = Math.sin(time * 1.8) * 0.003;
+      const threatShake = Math.sin(time * (18 + grandfatherThreatRatio * 16)) * 0.004 * grandfatherThreatRatio;
 
       // Right Flashlight Hand
       rightArmPivot.position.set(
         0.27 + bobX + swayX,
-        -0.24 - bobY + swayY + (torchActive ? 0 : -0.04),
+        -0.24 - bobY + swayY + breath + threatShake + (torchActive ? 0 : -0.04),
         -0.44
       );
       rightArmPivot.rotation.set(
         (isSprinting ? -0.12 : 0) + swayY * 1.4,
         swayX * 1.6,
-        bobX * 1.5
+        bobX * 1.5 + threatShake * 1.8
       );
 
       // Left Hand: Held Item (Key / Note / Deed) OR Defensive Fear Ward Pose (Ref Image 9)!
@@ -1142,7 +1159,7 @@ export function buildMarkFirstPersonRig(): MarkFirstPersonRig {
       if (showLeftHand) {
         const tremble =
           grandfatherThreatRatio > 0.2
-            ? Math.sin(time * 34) * 0.006 * grandfatherThreatRatio
+            ? Math.sin(time * (34 + grandfatherThreatRatio * 10)) * 0.012 * grandfatherThreatRatio
             : 0;
         const targetY =
           heldItemKind !== 'none'

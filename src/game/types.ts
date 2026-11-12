@@ -45,7 +45,9 @@ export type PuzzleId =
   | 'monitors'
   | 'elixir'
   | 'statues'
-  | 'safe';
+  | 'safe'
+  | 'bedroom_chime'
+  | 'tomb_seal';
 
 export type InventoryItemId =
   | 'west_wing_key'
@@ -54,6 +56,7 @@ export type InventoryItemId =
   | 'statue_hall_key'
   | 'silver_lens'
   | 'study_key'
+  | 'bedroom_key'
   | 'crypt_key'
   | 'inheritance_deed'
   | 'master_exit_key';

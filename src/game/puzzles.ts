@@ -50,6 +50,12 @@ export const INVENTORY_CATALOG: Record<InventoryItemId, InventoryMeta> = {
     nameEn: "Grandfather's Study Key",
     descAr: 'يفتح باب مكتب الجد السري حيث خزنة الميراث.',
   },
+  bedroom_key: {
+    id: 'bedroom_key',
+    nameAr: 'مفتاح جناح نوم الجد',
+    nameEn: "Grandfather's Bedchamber Key",
+    descAr: 'يفتح جناح نوم فيكتور ويكشف لغز الأجراس المؤدي إلى سرداب الضريح.',
+  },
   crypt_key: {
     id: 'crypt_key',
     nameAr: 'مفتاح سرداب الضريح',
@@ -80,7 +86,7 @@ export const MARK_INHERITANCE_STORY = {
     'لم يبقَ أمام الشاب «مارك» سوى ساعات معدودة قبل أن يصادر الدائنون كل ما يملك ويلقوا به خلف القضبان، بعد أن تراكمت عليه الديون الخانقة وأُغلقت في وجهه كل الأبواب. وفي أشدّ لحظات يأسه، طرق ساعي البريد بابه في منتصف الليل حاملاً مظروفاً شمعياً أحمر من محامٍ مجهول، يبلغه فيه بوفاة جدّه الثري الغامض «فيكتور مالاكور» الذي هجره الجميع منذ عقود في قلعته الجبلية النائية.',
     'نصّت الرسالة على أن الجدّ لم يترك وريثاً شرعياً لثروته الطائلة وقلعته الشاسعة سوى حفيده «مارك»، بشرط واحد لا يقبل التأجيل: أن يحضر مارك بنفسه قبل طلوع الفجر إلى قلب القلعة، ويستخرج «وثيقة الميراث المختومة» بيده من سرداب العائلة ليُسقط ديونه إلى الأبد.',
     'وما إن عبر مارك البوابة الحديدية الصدئة لقلعة الجدّ حتى انطبقت المصاريع خلفه بصليلٍ مرعب وأوصدت الأقفال تلقائياً! حينها فقط أدرك الحقيقة المروّعة التي أخفتها الرسالة: لقد مات جسد الجدّ فيكتور ودُفن في ضريحه الحجري، لكن روحه الشريرة المهووسة بثروته لم تغادر جدران القلعة قط، بل نصبت فخّ الميراث لاستدراج حفيدها وقتله بضربة واحدة لكل من يجرؤ على الاقتراب من أموالها!',
-    'الآن يقف مارك وحيداً في ظلام القلعة الشاسعة الممتدة عبر أربعة عشر جناحاً وقاعة؛ عليه أن يستكشف الممرات والغرف المنسية، يفتش عن الأدلة والمخطوطات بذكائه، يحلّ الألغاز المتسلسلة ليحصل على المفاتيح ويفتح الأبواب الموصدة حتى يصل إلى سرداب الضريح وينتزع «ورقة الورث»... وحذارِ اللحظة التي يلمس فيها الورقة، فحينها سينشقّ قبر الجدّ ويخرج منه ليطارده حتى البوابة الأخيرة!',
+    'الآن يقف مارك وحيداً في ظلام القلعة الشاسعة الممتدة عبر أربعة عشر جناحاً وقاعة؛ عليه أن يستكشف الممرات والغرف المنسية، يفتش عن الأدلة والمخطوطات بذكائه، يحلّ ثمانية ألغاز متسلسلة ليحصل على المفاتيح ويفتح الأبواب الموصدة حتى يصل إلى سرداب الضريح وينتزع «وثيقة الميراث المختومة»... وحذارِ اللحظة التي يلمس فيها الوثيقة، فحينها سينشقّ قبر الجدّ ويخرج منه ليطارده حتى البوابة الأخيرة!',
   ],
   signatureAr: '«من يدخل قلعتي طمعاً في ذهبي... لن يخرج منها إلا إذا سبق خطواتي نحو الفجر» — الجد فيكتور مالاكور',
 };
@@ -125,7 +131,7 @@ export const CASTLE_DIALOGUES: Record<string, DialogueLine> = {
     id: 'crypt_unlocked',
     speakerAr: 'مارك',
     speakerRole: 'mark',
-    textAr: 'انفتح باب سرداب الضريح! وثيقة الميراث هناك أمام قبر جدي... سآخذها وأركض بكل قوتي نحو البوابة الرئيسية!',
+    textAr: 'انفتح باب سرداب الضريح! لكن الختم الأخير يفصلني عن الوثيقة... عليّ حلّه بسرعة قبل أن يستيقظ جدي من قبره!',
     durationSec: 6.5,
   },
   tomb_eruption: {
@@ -145,9 +151,9 @@ export function createInitialLoreNotes(): LoreNote[] {
       titleEn: "Solicitor's Letter: The Grand Foyer",
       roomNameAr: 'البهو الملكي والدرج الكبير',
       bodyAr:
-        'إلى مارك: إذا أردت النجاة بحياتك، فلا تدع روح جدك تقترب منك أبداً؛ قبضته قاتلة، لكنك شابّ وأسرع منه ركضاً فاستغلّ سرعتك والخزائن الخشبية للاختباء! لقد أخفى جدك مفتاح الرواق الغربي داخل الساعة الطويلة، وربط قفلها الرباعي بسنة تشييد هذه القلعة (1894 م) المنقوشة بماء الذهب أسفل لوحته الزيتية المتصدرة لأعلى الدرج الكبير.',
+        'إلى مارك: إذا أردت النجاة بحياتك، فلا تدع روح جدك تقترب منك أبداً؛ قبضته قاتلة وهو أسرع منك حتى عند الركض! استغلّ الزوايا والخزائن الخشبية للاختباء، واستخدم اندفاعك القصير عند الضرورة. لقد أخفى جدك مفتاح الرواق الغربي داخل الساعة الطويلة، وربط قفلها الرباعي بسنة تشييد هذه القلعة (1894 م) المنقوشة بماء الذهب أسفل لوحته الزيتية المتصدرة لأعلى الدرج الكبير.',
       bodyEn:
-        'Mark: Grandfather locked the West Wing key inside the tall clock using the four-digit founding year (1894) engraved beneath his grand portrait on the central staircase.',
+        'Mark: Grandfather outruns you, so use corners, hiding places, and your short dash carefully. He locked the West Wing key inside the tall clock using the four-digit founding year (1894) beneath his grand portrait.',
       relatedPuzzle: 'clock',
       x: 2.8,
       z: 33.8,
@@ -211,13 +217,13 @@ export function createInitialLoreNotes(): LoreNote[] {
     },
     {
       id: 'note-6-safe',
-      titleAr: 'وصية فيكتور الأخيرة: خزنة الضريح',
-      titleEn: "Victor's Final Testament: Crypt Vault",
+      titleAr: 'وصية فيكتور الأخيرة: مفتاح جناح النوم',
+      titleEn: "Victor's Final Testament: Bedchamber Key",
       roomNameAr: 'مكتب الجد السري وخزنة الميراث',
       bodyAr:
-        'إن وصلتَ إلى مكتبي يا مارك فقد أثبتّ دهاءً لم أتوقعه من مديونٍ يائس. خلف هذه الخزنة البصرية يرقد مفتاح ضريحي الحجري؛ يدخل شعاع الضوء من أعلى اليسار وعليك تدوير المرايا المائلة ليخرج الشعاع من مستقبِل القفل أسفل اليمين. وحذارِ اللحظة التي ترفع فيها وثيقة الميراث أمام تابوتي، فحينها ستوقظ لعنتي من القبر!',
+        'إن وصلتَ إلى مكتبي يا مارك فقد أثبتّ دهاءً لم أتوقعه من مديونٍ يائس. خلف هذه الخزنة البصرية يرقد مفتاح جناح نومي؛ يدخل شعاع الضوء من أعلى اليسار وعليك تدوير المرايا المائلة ليخرج الشعاع من مستقبِل القفل أسفل اليمين. ومن جناحي ستعثر على مفتاح السرداب، لكن وثيقة الميراث محمية بختم أخير!',
       bodyEn:
-        'Behind this optical safe lies my Crypt Key. Touching the Inheritance Deed before my sarcophagus will awaken my spirit until you escape the front gate!',
+        'Behind this optical safe lies my Bedchamber Key. My bedroom holds the Crypt Key, and a final seal guards the Inheritance Deed beside my sarcophagus.',
       relatedPuzzle: 'safe',
       x: -11.5,
       z: -24.5,
@@ -286,7 +292,7 @@ export function createInitialLoreNotes(): LoreNote[] {
       titleEn: "Victor's Deathbed Confession",
       roomNameAr: 'جناح نوم الجد فيكتور',
       bodyAr:
-        'تركتُ ثروتي كلها معروضةً باسم حفيدي «مارك» لا حبّاً به، بل لأن الديون ستدفعه حتماً للمجيء بقدميه إلى قلعتي. فليأخذ الورقة إن استطاع حلّ أقفالي الستة... وسأرى إن كانت قدماه الشابتان ستسبقان غضبي!',
+        'تركتُ ثروتي كلها معروضةً باسم حفيدي «مارك» لا حبّاً به، بل لأن الديون ستدفعه حتماً للمجيء بقدميه إلى قلعتي. فليأخذ الورقة إن استطاع حلّ أختامها الثمانية... وسأرى إن كانت قدماه الشابتان ستسبقان غضبي!',
       bodyEn:
         'I named Mark sole heir knowing his debts would force him into my castle. Let us see if youth can outrun my wrath.',
       isOptionalLore: true,
@@ -294,11 +300,39 @@ export function createInitialLoreNotes(): LoreNote[] {
       z: -39.5,
       discovered: false,
     },
+    {
+      id: 'note-7-bedchamber',
+      titleAr: 'نوتة فيكتور الأخيرة: أجراس جناح النوم',
+      titleEn: "Victor's Last Score: Bedchamber Chimes",
+      roomNameAr: 'جناح نوم الجد فيكتور الخاص',
+      bodyAr:
+        'وجدتُ النوتة خلف إطار المرآة: «أيقظ الجرس الثالث، ثم الأول، ثم الرابع، واختم بالثاني». اعزف النغمات الأربع بهذا الترتيب، فالمفتاح النحاسي لا يظهر إلا لمن يصغي جيداً.',
+      bodyEn:
+        'The score behind the mirror reads: ring the third chime, then the first, then the fourth, and finish with the second.',
+      relatedPuzzle: 'bedroom_chime',
+      x: -43.0,
+      z: -32.0,
+      discovered: false,
+    },
+    {
+      id: 'note-8-crypt-seal',
+      titleAr: 'نقش الختم الأخير على حجر الضريح',
+      titleEn: 'The Final Crypt Seal Inscription',
+      roomNameAr: 'سرداب الضريح وقبر الجد',
+      bodyAr:
+        'قبل لمس الوثيقة، وجّه أقراص الختم الثلاثة إلى الرموز التالية من اليسار إلى اليمين: الغراب، ثم التاج، ثم اللهب. الهلال شاهد زائف؛ لا تدعه يخدعك.',
+      bodyEn:
+        'Before touching the deed, set the three seal dials from left to right to Raven, Crown, Flame. The Crescent is a decoy.',
+      relatedPuzzle: 'tomb_seal',
+      x: 4.0,
+      z: -23.5,
+      discovered: false,
+    },
   ];
 }
 
 /**
- * 6 Physical Architectural Clue Plaques & Wall Boards mounted directly inside the 3D Castle!
+ * 8 Physical Architectural Clue Plaques & Wall Boards mounted directly inside the 3D Castle!
  * Players can read them visually with their flashlight OR inspect them up close with [E].
  */
 export function createCastleCluePlaques(): CluePlaque[] {
@@ -393,6 +427,32 @@ export function createCastleCluePlaques(): CluePlaque[] {
       interactZ: -39.8,
       discovered: false,
     },
+    {
+      id: 'plaque-bedchamber-melody',
+      puzzleId: 'bedroom_chime',
+      roomId: 'master_bedroom',
+      roomNameAr: 'جناح نوم الجد فيكتور الخاص',
+      titleAr: 'نقش النوتة خلف مرآة فيكتور',
+      featuredCode: '٣ ← ١ ← ٤ ← ٢',
+      inscriptionAr: 'الأجراس التي تفتح القفل النحاسي: الجرس الثالث ثم الأول ثم الرابع ثم الثاني.',
+      subInscriptionAr: 'ابدأ بالثالث، واتبع النغمات حتى تسمع رنين المفتاح.',
+      interactX: -44.7,
+      interactZ: -31.5,
+      discovered: false,
+    },
+    {
+      id: 'plaque-crypt-seal',
+      puzzleId: 'tomb_seal',
+      roomId: 'crypt',
+      roomNameAr: 'سرداب الضريح وقبر الجد',
+      titleAr: 'نقش الأقراص الثلاثة على تابوت فيكتور',
+      featuredCode: 'الغراب · التاج · اللهب',
+      inscriptionAr: 'من اليسار إلى اليمين، وجّه أقراص الختم إلى الغراب، ثم التاج، ثم اللهب.',
+      subInscriptionAr: 'الهلال رمز مضلل؛ لا تختَره على أي قرص من الأقراص الثلاثة.',
+      interactX: 22.6,
+      interactZ: -28.5,
+      discovered: false,
+    },
   ];
 }
 
@@ -479,14 +539,41 @@ export function createInitialPuzzleStations(): PuzzleStation[] {
       x: -22.5,
       z: -36.5,
       requiredItem: 'study_key',
+      rewardItem: 'bedroom_key',
+      solved: false,
+    },
+    {
+      id: 'bedroom_chime',
+      chapter: 7,
+      titleAr: 'أجراس جناح فيكتور المنكوبة',
+      titleEn: "Victor's Haunted Bedchamber Chimes",
+      districtAr: 'جناح نوم الجد فيكتور الخاص',
+      districtEn: "Victor's Master Bedchamber",
+      goalAr: 'المطلوب: اعزف الأجراس الأربعة بالترتيب الذي تركه فيكتور خلف المرآة لتحصل على مفتاح السرداب.',
+      x: -39.5,
+      z: -29.5,
+      requiredItem: 'bedroom_key',
       rewardItem: 'crypt_key',
+      solved: false,
+    },
+    {
+      id: 'tomb_seal',
+      chapter: 8,
+      titleAr: 'الختم الرخامي الأخير للضريح',
+      titleEn: 'The Last Marble Tomb Seal',
+      districtAr: 'سرداب الضريح وقبر الجد',
+      districtEn: "Grandfather's Crypt & Tomb",
+      goalAr: 'المطلوب: وجّه الأقراص الثلاثة إلى رموز الختم الصحيحة لكسر حماية الوثيقة المختومة.',
+      x: 6.0,
+      z: -25.0,
+      requiredItem: 'crypt_key',
       solved: false,
     },
   ];
 }
 
 // ============================================================================
-// Pure Deterministic Validators for All 6 Castle Puzzles
+// Pure Deterministic Validators for All 8 Castle Puzzles
 // ============================================================================
 
 export const TARGET_CLOCK_DIGITS = [1, 8, 9, 4] as const;
@@ -591,6 +678,32 @@ export function validateStatueOffering(sequence: readonly number[]): boolean {
     if (sequence[i] !== TARGET_STATUE_SEQUENCE[i]) return false;
   }
   return true;
+}
+
+export const BEDROOM_CHIMES = [
+  { num: 1, nameAr: 'الجرس الأول · نغمة الغروب', freq: 392.0 },
+  { num: 2, nameAr: 'الجرس الثاني · نغمة القمر', freq: 329.63 },
+  { num: 3, nameAr: 'الجرس الثالث · نغمة الديون', freq: 440.0 },
+  { num: 4, nameAr: 'الجرس الرابع · نغمة الضريح', freq: 523.25 },
+] as const;
+
+export const TARGET_BEDROOM_CHIME_SEQUENCE = [3, 1, 4, 2] as const;
+
+export function validateBedroomChime(sequence: readonly number[]): boolean {
+  return (
+    sequence.length === TARGET_BEDROOM_CHIME_SEQUENCE.length &&
+    sequence.every((note, index) => note === TARGET_BEDROOM_CHIME_SEQUENCE[index])
+  );
+}
+
+export const TOMB_SEAL_SYMBOLS = ['الهلال', 'التاج', 'الغراب', 'اللهب'] as const;
+export const TARGET_TOMB_SEAL = [2, 1, 3] as const;
+
+export function validateTombSeal(symbols: readonly number[]): boolean {
+  return (
+    symbols.length === TARGET_TOMB_SEAL.length &&
+    symbols.every((symbol, index) => symbol === TARGET_TOMB_SEAL[index])
+  );
 }
 
 export interface BeamStepVisit {

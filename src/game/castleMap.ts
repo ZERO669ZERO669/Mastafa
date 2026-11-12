@@ -607,7 +607,7 @@ export function createInitialDoors(): CastleDoor[] {
       isMainExit: true,
       lockedHintAr: 'بوابة الخروج موصدة بالسلاسل! لن تغادر القلعة قبل انتزاع «وثيقة الميراث ومفتاح البوابة» من سرداب الضريح شمالاً!',
     },
-    // --- 6 Optional Exploration Wing Doors (Unlocked for immediate AAA castle exploration!) ---
+    // --- Optional Exploration Wing Doors ---
     {
       id: 'door-library',
       nameAr: 'باب المكتبة القوطية المهجورة',
@@ -686,11 +686,11 @@ export function createInitialDoors(): CastleDoor[] {
       z: -29,
       axis: 'z',
       width: 4.0,
-      unlocked: true,
+      requiredItem: 'bedroom_key',
+      unlocked: false,
       isOpen: false,
       openProgress: 0,
-      isOptionalWing: true,
-      lockedHintAr: '',
+      lockedHintAr: 'الباب موصد بقفل نحاسي؛ استخرج مفتاح جناح النوم من خزنة المكتب بعد حل لغز المرايا.',
     },
   ];
 }

@@ -35,22 +35,21 @@ import {
 import { DIFFICULTY_TUNING } from './achievements';
 import { createCastleCluePlaques } from './puzzles';
 
-export const TOTAL_SIGILS = 6;
+export const TOTAL_SIGILS = 8;
 export const TOTAL_RELICS = 12;
 export const PLAYER_RADIUS = 0.48;
 export const ENEMY_RADIUS = 0.52;
 
-// Mark is decisively faster than Grandfather Victor both when walking (6.25 vs 3.65 m/s)
-// AND when sprinting (8.85 vs 3.65 / 3.95 m/s), while Grandfather moves with terrifying speed & persistence!
+// Victor narrowly outruns Mark's sprint in a direct chase; hiding, route choice, and Victor's wind-up remain Mark's counterplay.
 export const PLAYER_WALK_SPEED = 6.25;
-export const PLAYER_SPRINT_SPEED = 8.85;
+export const PLAYER_SPRINT_SPEED = 8.3;
 export const PLAYER_CROUCH_SPEED = 3.45;
 export const PLAYER_DASH_SPEED = 12.8;
 
-export const GRANDFATHER_PATROL_SPEED = 2.45;
-export const GRANDFATHER_SUSPICIOUS_SPEED = 3.05;
-export const GRANDFATHER_CHASE_SPEED = 3.65;
-export const GRANDFATHER_ENRAGED_SPEED = 3.95;
+export const GRANDFATHER_PATROL_SPEED = 2.8;
+export const GRANDFATHER_SUSPICIOUS_SPEED = 4.1;
+export const GRANDFATHER_CHASE_SPEED = 8.85;
+export const GRANDFATHER_ENRAGED_SPEED = 9.4;
 export const GRANDFATHER_WINDUP_RANGE = 1.38;
 export const GRANDFATHER_LETHAL_GRAB_RADIUS = 1.12;
 export const GRANDFATHER_GRAB_WINDUP_SEC = 0.42;
@@ -964,9 +963,13 @@ export function stepEnemies(
         e.alertTimer = Math.max(0, e.alertTimer - dt);
         if (player.isHidden && !hasLOS) {
           e.alertTimer = Math.max(0, e.alertTimer - dt * 2.6);
-        } else if (!player.isHidden && dist <= 25.0 && !(player.isCrouching && dist > 8.5)) {
-          // Relentless Trail Pursuit: Grandfather keeps following Mark across rooms/corridors
-          // unless Mark hides in a wardrobe, crouches silently behind cover, or outruns him >25m!
+        } else if (
+          !player.isHidden &&
+          hasLOS &&
+          dist <= 30.0 &&
+          !(player.isCrouching && dist > 8.5)
+        ) {
+          // Update a chase target only when Victor can see Mark; behind walls he searches the last known position.
           e.targetX = player.x;
           e.targetZ = player.z;
         }
@@ -978,7 +981,7 @@ export function stepEnemies(
             (player.isHidden || dist > 25.0 || player.isCrouching))
         ) {
           e.alertState = 'suspicious';
-          e.alertTimer = 5.5;
+          e.alertTimer = 8.0;
           e.phase = 'idle';
           e.phaseTimer = 0;
           const searchGoal = pickSmartGrandfatherPatrolNode(e, player, doors, walls, false);
@@ -1478,7 +1481,8 @@ export function findNearestInteractable(
   let best: InteractTarget | null = null;
   let bestScore = Infinity;
 
-  if (!player.hasDeed) {
+  const tombSealSolved = puzzles.some((p) => p.id === 'tomb_seal' && p.solved);
+  if (!player.hasDeed && tombSealSolved) {
     const dDeed = Math.hypot(DEED_ALTAR_POS.x - player.x, DEED_ALTAR_POS.z - player.z);
     if (dDeed <= 2.8) {
       best = { type: 'deed', dist: dDeed };
@@ -1575,7 +1579,7 @@ export function getActiveChapterObjective(
 
   if (player.hasDeed) {
     return {
-      chapterNum: 7,
+      chapterNum: 9,
       roomNameAr: currentRoom.nameAr,
       objectiveAr:
         'الجد خرج من قبره! اركض فوراً إلى بوابة القلعة الرئيسية جنوب البهو الملكي وافتحها بمفتاح الخروج!',
@@ -1588,14 +1592,14 @@ export function getActiveChapterObjective(
     const cryptDoor = doors.find((d) => d.id === 'door-crypt');
     if (cryptDoor && !cryptDoor.isOpen) {
       return {
-        chapterNum: 7,
+        chapterNum: 9,
         roomNameAr: currentRoom.nameAr,
         objectiveAr: 'افتح بوابة سرداب الضريح بمفتاح السرداب لانتزاع وثيقة الميراث!',
         targetPos: { x: cryptDoor.x, z: cryptDoor.z },
       };
     }
     return {
-      chapterNum: 7,
+      chapterNum: 9,
       roomNameAr: currentRoom.nameAr,
       objectiveAr: 'ادخل سرداب الضريح والتقط «وثيقة الميراث المختومة» من أمام تابوت الجد!',
       targetPos: DEED_ALTAR_POS,
@@ -1608,7 +1612,9 @@ export function getActiveChapterObjective(
     monitors: 'المطلوب (الفصل ٣): افحص قبو المراقبة واضبط شاشات الحراسة لفتح الجناح الشرقي.',
     elixir: 'المطلوب (الفصل ٤): استكشف المصحة الشرقية وحضّر المركّب الكيميائي لفتح البوابة الفضية.',
     statues: 'المطلوب (الفصل ٥): ادخل قاعة التماثيل الستة وأتمّ طقس الشعلات لفتح مكتب الجد.',
-    safe: 'المطلوب (الفصل ٦): فكّ قفل الخزنة البصرية في مكتب الجد السري لاستخراج مفتاح الضريح.',
+    safe: 'المطلوب (الفصل ٦): فكّ قفل الخزنة البصرية لاستخراج مفتاح جناح نوم الجد.',
+    bedroom_chime: 'المطلوب (الفصل ٧): ادخل جناح نوم فيكتور واعزف نوتة الأجراس لتحصل على مفتاح السرداب.',
+    tomb_seal: 'المطلوب (الفصل ٨): ادخل السرداب واضبط الأقراص الرخامية لكسر ختم وثيقة الميراث.',
   };
 
   return {

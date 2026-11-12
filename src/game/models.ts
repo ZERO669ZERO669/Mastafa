@@ -1686,6 +1686,80 @@ export function createCastleWorld(params: {
   safeFace.position.set(-18.2, 1.72, -41.4);
   worldGroup.add(safeFace);
 
+  const bedchamberScoreTex = track(
+    makeCanvasTex(1024, 360, (ctx, w, h) => {
+      ctx.fillStyle = '#17110b';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = '#d6a84f';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(12, 12, w - 24, h - 24);
+      ctx.fillStyle = '#f5d78e';
+      ctx.font = 'bold 54px Cairo, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('نوتة فيكتور الأخيرة', w / 2, 95);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 76px Cairo, serif';
+      ctx.fillText('٣  ←  ١  ←  ٤  ←  ٢', w / 2, 214);
+      ctx.fillStyle = '#d6a84f';
+      ctx.font = 'bold 36px Cairo, serif';
+      ctx.fillText('رتّب الأجراس من اليسار إلى اليمين', w / 2, 296);
+    })
+  );
+  const bedchamberFrame = new THREE.Mesh(track(new THREE.BoxGeometry(1.82, 0.74, 0.08)), brassMat);
+  bedchamberFrame.position.set(-47.48, 1.72, -31.5);
+  bedchamberFrame.rotation.y = Math.PI / 2;
+  worldGroup.add(bedchamberFrame);
+  const bedchamberFace = new THREE.Mesh(
+    track(new THREE.PlaneGeometry(1.72, 0.64)),
+    track(new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: bedchamberScoreTex,
+      emissive: 0x78350f,
+      emissiveIntensity: 0.22,
+      roughness: 0.34,
+    }))
+  );
+  bedchamberFace.position.set(-47.41, 1.72, -31.5);
+  bedchamberFace.rotation.y = Math.PI / 2;
+  worldGroup.add(bedchamberFace);
+
+  const tombSealTex = track(
+    makeCanvasTex(1024, 360, (ctx, w, h) => {
+      ctx.fillStyle = '#090a12';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(12, 12, w - 24, h - 24);
+      ctx.fillStyle = '#c4b5fd';
+      ctx.font = 'bold 52px Cairo, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('الختم الرخامي الأخير', w / 2, 94);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 68px Cairo, serif';
+      ctx.fillText('الغراب  ·  التاج  ·  اللهب', w / 2, 214);
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = 'bold 34px Cairo, serif';
+      ctx.fillText('من اليسار إلى اليمين — احذر الهلال الزائف', w / 2, 296);
+    })
+  );
+  const cryptSealFrame = new THREE.Mesh(track(new THREE.BoxGeometry(1.9, 0.74, 0.08)), brassMat);
+  cryptSealFrame.position.set(25.35, 1.72, -28.5);
+  cryptSealFrame.rotation.y = -Math.PI / 2;
+  worldGroup.add(cryptSealFrame);
+  const cryptSealFace = new THREE.Mesh(
+    track(new THREE.PlaneGeometry(1.8, 0.64)),
+    track(new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: tombSealTex,
+      emissive: 0x312e81,
+      emissiveIntensity: 0.26,
+      roughness: 0.3,
+    }))
+  );
+  cryptSealFace.position.set(25.28, 1.72, -28.5);
+  cryptSealFace.rotation.y = -Math.PI / 2;
+  worldGroup.add(cryptSealFace);
+
   // --- ROOM 8: GRANDFATHER'S CRYPT, DEED ALTAR & SARCOPHAGUS ---
   const deedPedestal = new THREE.Mesh(
     track(new THREE.CylinderGeometry(0.55, 0.72, 1.12, 12)),
@@ -1718,6 +1792,7 @@ export function createCastleWorld(params: {
   exitKeyRing.rotation.x = Math.PI / 2;
   exitKeyRing.position.set(-0.18, 0.04, -0.12);
   deedVisual.add(exitKeyRing);
+  deedVisual.visible = false;
   worldGroup.add(deedVisual);
 
   const sarcophagusBase = new THREE.Mesh(
@@ -2044,6 +2119,46 @@ export function createCastleWorld(params: {
     disc.rotation.x = -Math.PI / 2;
     disc.position.y = 0.015;
     g.add(disc);
+
+    const halo = new THREE.Mesh(track(new THREE.TorusGeometry(0.27, 0.014, 8, 28)), brassMat);
+    halo.rotation.x = Math.PI / 2;
+    halo.position.y = 1.29;
+    g.add(halo);
+
+    if (pz.id === 'bedroom_chime') {
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const bell = new THREE.Mesh(
+          track(new THREE.CylinderGeometry(0.045, 0.092, 0.18, 12)),
+          brassMat
+        );
+        bell.position.set(Math.cos(angle) * 0.28, 1.18, Math.sin(angle) * 0.28);
+        g.add(bell);
+        const clapper = new THREE.Mesh(
+          track(new THREE.SphereGeometry(0.035, 8, 6)),
+          track(new THREE.MeshStandardMaterial({ color: 0xfcd34d, metalness: 0.76, roughness: 0.26 }))
+        );
+        clapper.position.set(Math.cos(angle) * 0.28, 1.055, Math.sin(angle) * 0.28);
+        g.add(clapper);
+      }
+    } else if (pz.id === 'tomb_seal') {
+      for (let i = 0; i < 3; i++) {
+        const runeRing = new THREE.Mesh(
+          track(new THREE.TorusGeometry(0.31 - i * 0.07, 0.018, 8, 28)),
+          track(new THREE.MeshStandardMaterial({
+            color: i === 1 ? 0xc4b5fd : 0x94a3b8,
+            emissive: 0x312e81,
+            emissiveIntensity: 0.38,
+            metalness: 0.62,
+            roughness: 0.34,
+          }))
+        );
+        runeRing.rotation.x = Math.PI / 2;
+        runeRing.rotation.z = i * 0.34;
+        runeRing.position.y = 1.14 + i * 0.085;
+        g.add(runeRing);
+      }
+    }
 
     worldGroup.add(g);
     puzzleVisuals.set(pz.id, { group: g, beaconMat });

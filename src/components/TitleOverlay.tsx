@@ -65,7 +65,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
         {(bestSigils > 0 || bestTimeSeconds !== null || unlockedAchievementsCount > 0) && (
           <div className="flex items-center gap-3 font-semibold tabular-nums text-stone-200">
             <span>
-              أفضل تقدّم: <strong className="text-amber-400">{bestSigils}/6</strong>
+              أفضل تقدّم: <strong className="text-amber-400">{bestSigils}/8</strong>
             </span>
             {bestTimeSeconds !== null && (
               <span className="text-emerald-400">
@@ -133,7 +133,7 @@ export const TitleOverlay: React.FC<TitleOverlayProps> = ({
                 <span>مواصلة من آخر حفظ — الفصل {savedCheckpoint.chapterNum}</span>
               </span>
               <span className="mt-0.5 text-xs font-bold text-emerald-200/90 tabular-nums">
-                {savedCheckpoint.roomNameAr} · الألغاز {savedCheckpoint.sigilsSolved}/6 · التحف{' '}
+                {savedCheckpoint.roomNameAr} · الألغاز {savedCheckpoint.sigilsSolved}/8 · التحف{' '}
                 {savedCheckpoint.relicsFound}/12
               </span>
             </button>

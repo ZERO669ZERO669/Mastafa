@@ -86,13 +86,13 @@ export const StoryLetterModal: React.FC<StoryLetterModalProps> = ({
             <div className="flex items-center gap-2 rounded-lg border border-red-900/30 bg-red-900/10 px-3 py-2">
               <ShieldAlert className="h-4 w-4 shrink-0 text-red-900" />
               <span className="font-semibold text-stone-900">
-                ضربة الجد تقتلك فوراً، لكن ركضك أسرع منه للهرب والاختباء!
+                ضربة الجد قاتلة وهو أسرع منك؛ اختبئ واستغلّ الزوايا واندفاعك القصير!
               </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg border border-amber-900/25 bg-amber-900/10 px-3 py-2">
               <Flame className="h-4 w-4 shrink-0 text-amber-900" />
               <span className="font-semibold text-stone-900">
-                انتزع ورقة الورث من الضريح ثم اهرب قبل أن يدركك الجد!
+                اكسر ختم الضريح، خذ الوثيقة، ثم اركض نحو البوابة قبل أن يستيقظ الجد!
               </span>
             </div>
           </div>

@@ -31,15 +31,15 @@ export const DIFFICULTY_TUNING: Record<
 > = {
   story: {
     labelAr: 'وضع القصة',
-    descAr: 'روح الجد أبطأ واستنزاف الإدراك والبطارية أخفّ للاستمتاع بالألغاز والاستكشاف.',
-    enemySpeedMul: 0.82,
+    descAr: 'ضغط أقل من النمط المتوازن؛ يبقى فيكتور أسرع من ركض مارك لكن سمعه واستنزاف الإدراك أخفّ.',
+    enemySpeedMul: 0.97,
     hearingMul: 0.78,
     sanityDrainMul: 0.65,
     batteryDrainMul: 0.7,
   },
   normal: {
     labelAr: 'متوازن (الافتراضي)',
-    descAr: 'مارك أسرع من روح الجد في المشي والركض مع توازن مشوّق بين الرعب والألغاز.',
+    descAr: 'روح الجد أسرع بقليل من مارك في المطاردة؛ تكسبه الاختباء والمسارات الذكية والإنذار المسبق وقتاً للمراوغة.',
     enemySpeedMul: 1.0,
     hearingMul: 1.0,
     sanityDrainMul: 1.0,
@@ -48,7 +48,7 @@ export const DIFFICULTY_TUNING: Record<
   nightmare: {
     labelAr: 'كابوس القلعة',
     descAr: 'حاسة سمع الجد أشدّ وسرعته أعلى للمحترفين الباحثين عن أقصى درجات التوتر.',
-    enemySpeedMul: 1.14,
+    enemySpeedMul: 1.05,
     hearingMul: 1.25,
     sanityDrainMul: 1.3,
     batteryDrainMul: 1.2,
@@ -81,14 +81,14 @@ export const STEAM_ACHIEVEMENTS: readonly AchievementDef[] = [
     id: 'loremaster',
     titleAr: 'محقّق المخطوطات السرية',
     titleEn: 'Castle Archivist',
-    descAr: 'اكتشف واقرأ جميع المخطوطات الإحدى عشرة الموزعة في أجنحة القلعة.',
+    descAr: 'اكتشف واقرأ جميع المخطوطات الثلاث عشرة الموزعة في أجنحة القلعة.',
     category: 'mastery',
   },
   {
     id: 'master_locksmith',
-    titleAr: 'كاسر أختام القلعة الستة',
-    titleEn: 'Master of Six Locks',
-    descAr: 'حلّ جميع الألغاز المتسلسلة الستة في جولة واحدة.',
+    titleAr: 'كاسر أختام القلعة الثمانية',
+    titleEn: 'Master of Eight Locks',
+    descAr: 'حلّ جميع الألغاز المتسلسلة الثمانية في جولة واحدة.',
     category: 'story',
   },
   {

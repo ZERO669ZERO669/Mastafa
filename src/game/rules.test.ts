@@ -47,9 +47,11 @@ import {
   createInitialPuzzleStations,
   evaluateElixirMix,
   traceSafeLaserBeam,
+  validateBedroomChime,
   validateGrandfatherClock,
   validateSecurityMonitors,
   validateStatueOffering,
+  validateTombSeal,
 } from './puzzles';
 import { InventoryItemId } from './types';
 import {
@@ -59,6 +61,7 @@ import {
   sanitizeSettings,
 } from './achievements';
 import {
+  SavedCheckpointData,
   StorageLike,
   applyCheckpointToSim,
   clearCheckpointStorage,
@@ -99,27 +102,26 @@ function overlapsSolidWall(
   return null;
 }
 
-test('Mark is decisively faster than Grandfather Victor both when walking AND sprinting across difficulties', () => {
+test('Grandfather narrowly outruns Mark in a chase and gains only a small final-escape speed boost', () => {
+  assert.ok(GRANDFATHER_CHASE_SPEED > PLAYER_SPRINT_SPEED);
+  assert.ok(GRANDFATHER_CHASE_SPEED > PLAYER_WALK_SPEED);
+  assert.ok(GRANDFATHER_ENRAGED_SPEED > GRANDFATHER_CHASE_SPEED);
   assert.ok(
-    PLAYER_WALK_SPEED > GRANDFATHER_CHASE_SPEED + 2.5,
-    `Mark walk (${PLAYER_WALK_SPEED}) must clearly outpace Grandfather chase (${GRANDFATHER_CHASE_SPEED})`
+    GRANDFATHER_ENRAGED_SPEED / GRANDFATHER_CHASE_SPEED <= 1.08,
+    'Final chase should be only slightly faster than the regular chase'
   );
-  assert.ok(
-    PLAYER_WALK_SPEED > GRANDFATHER_ENRAGED_SPEED + 2.0,
-    `Mark walk (${PLAYER_WALK_SPEED}) must still outpace awakened Grandfather (${GRANDFATHER_ENRAGED_SPEED})`
-  );
-  assert.ok(
-    PLAYER_SPRINT_SPEED > GRANDFATHER_ENRAGED_SPEED + 4.5,
-    `Mark sprint (${PLAYER_SPRINT_SPEED}) must give strong escape margin over awakened Grandfather (${GRANDFATHER_ENRAGED_SPEED})`
-  );
-
-  const nightmareChase = GRANDFATHER_CHASE_SPEED * DIFFICULTY_TUNING.nightmare.enemySpeedMul;
-  const nightmareEnraged = GRANDFATHER_ENRAGED_SPEED * DIFFICULTY_TUNING.nightmare.enemySpeedMul;
-  assert.ok(
-    PLAYER_WALK_SPEED > nightmareEnraged + 1.5,
-    `Even on Nightmare, Mark walk (${PLAYER_WALK_SPEED}) outpaces enraged Grandfather (${nightmareEnraged})`
-  );
-  assert.ok(PLAYER_SPRINT_SPEED > nightmareChase + 4.5);
+  for (const difficulty of ['story', 'normal', 'nightmare'] as const) {
+    const scaledChase = GRANDFATHER_CHASE_SPEED * DIFFICULTY_TUNING[difficulty].enemySpeedMul;
+    assert.ok(
+      scaledChase > PLAYER_SPRINT_SPEED,
+      `Victor must narrowly outrun Mark on ${difficulty} (${scaledChase} vs ${PLAYER_SPRINT_SPEED})`
+    );
+    const scaledFinalChase = GRANDFATHER_ENRAGED_SPEED * DIFFICULTY_TUNING[difficulty].enemySpeedMul;
+    assert.ok(
+      scaledFinalChase / PLAYER_SPRINT_SPEED <= 1.2,
+      `Final chase must stay within a fair sprint-speed margin on ${difficulty}`
+    );
+  }
   assert.ok(PLAYER_CROUCH_SPEED < PLAYER_WALK_SPEED);
 });
 
@@ -205,13 +207,13 @@ test('Swept collision prevents wall, door, corner, staircase, and optional wing 
   }
 });
 
-test('All 14 rooms, 18 pickups, 12 relics, 11 wardrobes, and 11 notes are valid and spoiler-free', () => {
+test('All 14 rooms, 18 pickups, 12 relics, 11 wardrobes, and 13 notes are valid and spoiler-free', () => {
   assert.equal(CASTLE_ROOMS.length, 14);
   const walls = createCastleWalls();
   const doors = createInitialDoors();
   assert.equal(doors.length, 16);
   const optionalDoors = doors.filter((d) => d.isOptionalWing);
-  assert.equal(optionalDoors.length, 6);
+  assert.equal(optionalDoors.length, 5);
   for (const od of optionalDoors) {
     assert.equal(od.unlocked, true, `Optional wing door ${od.id} should be unlocked for exploration`);
   }
@@ -257,7 +259,8 @@ test('All 14 rooms, 18 pickups, 12 relics, 11 wardrobes, and 11 notes are valid 
 
   const puzzles = createInitialPuzzleStations();
   const notes = createInitialLoreNotes();
-  assert.equal(notes.length, 11);
+  assert.equal(puzzles.length, 8);
+  assert.equal(notes.length, 13);
   assert.equal(notes.filter((n) => n.isOptionalLore).length, 5);
 
   // Verify ZERO solution spoilers in puzzle titles, goals, or HUD objectives!
@@ -333,7 +336,7 @@ test('Full Mark inheritance story parchment contains Mark, Grandfather, debts, d
   assert.ok(fullText.includes('قبر'));
 });
 
-test('All 6 sequential castle puzzle validators accept exact solutions and reject wrong inputs', () => {
+test('All 8 sequential castle puzzle validators accept exact solutions and reject wrong inputs', () => {
   assert.equal(validateGrandfatherClock([1, 8, 9, 4]), true);
   assert.equal(validateGrandfatherClock([1, 8, 9, 5]), false);
 
@@ -356,6 +359,11 @@ test('All 6 sequential castle puzzle validators accept exact solutions and rejec
     1, 2, 0,
   ];
   assert.equal(traceSafeLaserBeam(solvedSafe).solved, true);
+
+  assert.equal(validateBedroomChime([3, 1, 4, 2]), true);
+  assert.equal(validateBedroomChime([3, 4, 1, 2]), false);
+  assert.equal(validateTombSeal([2, 1, 3]), true);
+  assert.equal(validateTombSeal([0, 1, 2]), false);
 });
 
 test('Grandfather performs a fair 0.42s grab windup before executing Mark in one lethal hit', () => {
@@ -408,6 +416,9 @@ test('Claiming Inheritance Deed in Crypt awakens Grandfather from his tomb and o
   const enemies = createInitialEnemies(() => 0.2);
   const walls = createCastleWalls();
 
+  const blockedTarget = findNearestInteractable(player, notes, puzzles, doors, hidingSpots, new Set());
+  assert.notEqual(blockedTarget?.type, 'deed', 'The final seal must protect the deed before it is solved');
+  puzzles.find((pz) => pz.id === 'tomb_seal')!.solved = true;
   const target = findNearestInteractable(player, notes, puzzles, doors, hidingSpots, new Set());
   assert.equal(target?.type, 'deed');
 
@@ -573,7 +584,7 @@ test('Grandfather relentlessly pursues Mark onto the Foyer carpet and routes cle
   );
 });
 
-test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain exact puzzle clues, and unlock the entire castle end-to-end', () => {
+test('All 8 physical clue plaques & 8 puzzle notes are reachable and the full eight-lock chain leads to the exit', () => {
   const walls = createCastleWalls();
   const doors = createInitialDoors();
   for (const d of doors) d.isOpen = true;
@@ -582,7 +593,7 @@ test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain ex
   const notes = createInitialLoreNotes();
   const puzzles = createInitialPuzzleStations();
   const hidingSpots = createInitialHidingSpots();
-  assert.equal(plaques.length, 6);
+  assert.equal(plaques.length, 8);
 
   // 1. Every physical 3D CluePlaque is standing in valid collision-free floor space and is inspectable via [E]
   for (const pl of plaques) {
@@ -612,6 +623,8 @@ test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain ex
     elixir: ['19 مل'],
     statues: ['الديون', 'الميراث', 'الصمت', 'الضريح'],
     safe: ['أعلى اليسار', 'أسفل اليمين'],
+    bedroom_chime: ['الثالث', 'الأول', 'الرابع', 'الثاني'],
+    tomb_seal: ['الغراب', 'التاج', 'اللهب'],
   };
 
   for (const pz of puzzles) {
@@ -632,7 +645,7 @@ test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain ex
     }
   }
 
-  // 3. Simulate full 6-chapter sequential playthrough from locked Castle start to Victory Exit Gate!
+  // 3. Simulate the full 8-puzzle sequential playthrough from locked start to the victory gate.
   const simDoors = createInitialDoors();
   const simPuzzles = createInitialPuzzleStations();
   const simPlayer = createInitialPlayerState();
@@ -640,7 +653,7 @@ test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain ex
 
   const chapterSteps: Array<{
     puzzleId: string;
-    doorToUnlockAfter: string;
+    doorToUnlockAfter?: string;
     solverCheck: () => boolean;
   }> = [
     {
@@ -670,8 +683,17 @@ test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain ex
     },
     {
       puzzleId: 'safe',
-      doorToUnlockAfter: 'door-crypt',
+      doorToUnlockAfter: 'door-bedroom',
       solverCheck: () => traceSafeLaserBeam([0, 2, 2, 2, 0, 1, 1, 2, 0]).solved,
+    },
+    {
+      puzzleId: 'bedroom_chime',
+      doorToUnlockAfter: 'door-crypt',
+      solverCheck: () => validateBedroomChime([3, 1, 4, 2]),
+    },
+    {
+      puzzleId: 'tomb_seal',
+      solverCheck: () => validateTombSeal([2, 1, 3]),
     },
   ];
 
@@ -685,10 +707,12 @@ test('All 6 physical 3D clue plaques & 6 chapter notes are reachable, contain ex
     if (pz.rewardItem) inv.add(pz.rewardItem);
     if (pz.secondaryRewardItem) inv.add(pz.secondaryRewardItem);
 
-    const door = simDoors.find((d) => d.id === step.doorToUnlockAfter)!;
-    assert.ok(door.requiredItem && inv.has(door.requiredItem), `Reward did not unlock ${door.id}`);
-    door.unlocked = true;
-    door.isOpen = true;
+    if (step.doorToUnlockAfter) {
+      const door = simDoors.find((d) => d.id === step.doorToUnlockAfter)!;
+      assert.ok(door.requiredItem && inv.has(door.requiredItem), `Reward did not unlock ${door.id}`);
+      door.unlocked = true;
+      door.isOpen = true;
+    }
   }
 
   // Claim Inheritance Deed in Crypt & unlock Main Castle Gate
@@ -776,7 +800,7 @@ test('Grandfather automatically swings open closed unlocked doors without sticki
   assert.notEqual(gf.alertState, 'chase', 'Grandfather must eventually drop chase when Mark hides inside a wardrobe');
 });
 
-test('Foyer 1894 staircase lectern is immediately inspectable in front of Mark and all 6 CluePlaques carry featuredCode + subInscriptionAr', () => {
+test('Foyer 1894 lectern is immediately inspectable and all 8 clue plaques carry featured inscriptions', () => {
   const plaques = createCastleCluePlaques();
   const notes = createInitialLoreNotes();
   const puzzles = createInitialPuzzleStations();
@@ -803,7 +827,7 @@ test('Foyer 1894 staircase lectern is immediately inspectable in front of Mark a
   }
 });
 
-test('Checkpoint save & load system preserves Chapter 4 progress (3/6 puzzles, unlocked doors, keys, relics, notes) and restores safely away from enemies', () => {
+test('Checkpoint save & load system preserves Chapter 4 progress (3/8 puzzles, unlocked doors, keys, relics, notes) and restores safely away from enemies', () => {
   const mem = new Map<string, string>();
   const mockStorage: StorageLike = {
     getItem: (k) => mem.get(k) ?? null,
@@ -825,7 +849,7 @@ test('Checkpoint save & load system preserves Chapter 4 progress (3/6 puzzles, u
   const player = createInitialPlayerState();
   const inventory = new Set<InventoryItemId>(['west_wing_key', 'security_key', 'infirmary_key']);
 
-  // Simulate user reaching Chapter 4 Infirmary (3/6 puzzles solved, 5/12 relics, 3/11 notes, 26% battery)
+  // Simulate user reaching Chapter 4 Infirmary (3/8 puzzles solved, 5/12 relics, 3/13 notes, 26% battery)
   for (const id of ['clock', 'valves', 'monitors']) {
     puzzles.find((p) => p.id === id)!.solved = true;
   }
@@ -859,6 +883,7 @@ test('Checkpoint save & load system preserves Chapter 4 progress (3/6 puzzles, u
   });
 
   assert.equal(snap.chapterNum, 4);
+  assert.equal(snap.version, 2);
   assert.equal(snap.sigilsSolved, 3);
   assert.equal(snap.relicsFound, 5);
   assert.equal(snap.notesFound, 3);
@@ -911,6 +936,68 @@ test('Checkpoint save & load system preserves Chapter 4 progress (3/6 puzzles, u
 
   clearCheckpointStorage(mockStorage);
   assert.equal(loadCheckpointFromStorage(mockStorage), null);
+});
+
+test('Version 1 checkpoints keep the original six solved puzzles but route the player through the two new mandatory stages', () => {
+  const walls = createCastleWalls();
+  const legacy: SavedCheckpointData = {
+    version: 1,
+    savedAtMs: 1,
+    chapterNum: 6,
+    roomNameAr: 'مكتب الجد السري وخزنة الميراث',
+    sigilsSolved: 6,
+    notesFound: 0,
+    relicsFound: 0,
+    survivalSeconds: 300,
+    player: {
+      x: -22.5,
+      z: -36.5,
+      rotY: 0,
+      pitch: 0,
+      sanity: 70,
+      battery: 70,
+      stamina: 80,
+      flashlightOn: true,
+      hasDeed: false,
+      tombAwakened: false,
+    },
+    solvedPuzzleIds: ['clock', 'valves', 'monitors', 'elixir', 'statues', 'safe'],
+    unlockedDoorIds: ['door-study', 'door-bedroom', 'door-crypt'],
+    openDoorIds: ['door-study', 'door-crypt'],
+    inventory: ['study_key', 'crypt_key'],
+    discoveredNoteIds: [],
+    discoveredPlaqueIds: [],
+    collectedRelicIds: [],
+    collectedPickupIds: [],
+    playedDialogues: [],
+  };
+  const sim = {
+    player: createInitialPlayerState(),
+    doors: createInitialDoors(),
+    safeZones: createInitialSafeZones(),
+    notes: createInitialLoreNotes(),
+    plaques: createCastleCluePlaques(),
+    puzzles: createInitialPuzzleStations(),
+    pickups: createInitialPickups(),
+    relics: createInitialRelics(),
+    enemies: createInitialEnemies(() => 0.1),
+    inventory: new Set<InventoryItemId>(),
+    playedDialogues: new Set<string>(),
+    survivalSeconds: 0,
+    walls,
+  };
+
+  applyCheckpointToSim(sim, legacy, () => 0.2);
+
+  assert.equal(sim.puzzles.filter((pz) => pz.solved).length, 6);
+  assert.equal(sim.puzzles.find((pz) => pz.id === 'bedroom_chime')?.solved, false);
+  assert.equal(sim.puzzles.find((pz) => pz.id === 'tomb_seal')?.solved, false);
+  assert.equal(sim.inventory.has('bedroom_key'), true);
+  assert.equal(sim.inventory.has('crypt_key'), false);
+  assert.equal(sim.doors.find((d) => d.id === 'door-bedroom')?.unlocked, true);
+  assert.equal(sim.doors.find((d) => d.id === 'door-crypt')?.unlocked, false);
+  assert.equal(sim.doors.find((d) => d.id === 'door-crypt')?.isOpen, false);
+  assert.equal(getActiveChapterObjective(sim.puzzles, sim.player, sim.doors).chapterNum, 7);
 });
 
 test('Chained Asylum Wraith (phantom) & Statue Watcher patrol cleanly without ever sticking to walls, pursue around corners for 8s, and slow under flashlight without wall pushback', () => {
@@ -1009,6 +1096,3 @@ test('Grandfather Stalker Director actively brings Grandfather Victor into Mark 
     `Expected Grandfather Director to advance unseen to 22..34m of Mark, got ${newDist.toFixed(1)}m`
   );
 });
-
-
-
