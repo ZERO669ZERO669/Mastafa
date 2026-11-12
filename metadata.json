@@ -1,0 +1,6 @@
+{
+  "name": "Blackthorn Hollow",
+  "description": "A first-person 3D haunted castle horror adventure where Mark explores his late Grandfather Victor's sprawling mansion, solves sequential puzzles to unlock doors, claims the Sealed Inheritance Deed, and escapes the awakened spirit.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
